@@ -1,0 +1,34 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [],
+  "dev_command": "pnpm run dev",
+  "env_vars": {},
+  "experiments": null,
+  "git_remote": {
+    "repo_url": "https://7f0548f6b28a1758d9bf7be630d36cb4.artifacts.cloudflare.net/git/prod/JRfpvYi4YJk6iEGBmHgNG7.git",
+    "expiration": "2026-08-20T21:55:59.740Z",
+    "token": "art_v2_x_15b791057b76e3e4ca1ef48e565def237d110a8c?expires=1787262959",
+    "backend": "GIT_BACKEND_ARTIFACTS"
+  },
+  "name": "hr-nisr-v2",
+  "path": "/home/ubuntu/hr-nisr-v2",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "hkk9BmXRYzZLsfcEdMy9WS",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "ns4N9ifxWo2BRcRWaETgyG",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "ahmed abdalbadea",
+    "OWNER_OPEN_ID": "8XqxsMTTFB6WLgogvskVhi",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "f53a4615-756f-4c59-99ee-333324687c03",
+    "VITE_APP_ID": "JRfpvYi4YJk6iEGBmHgNG7",
+    "VITE_APP_LOGO": "",
+    "VITE_APP_TITLE": "HR.NISR.SA",
+    "VITE_FRONTEND_FORGE_API_KEY": "UmHwMicR8t8rkjDBkVQhsg",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-static",
+  "test_command": "pnpm test"
+}
