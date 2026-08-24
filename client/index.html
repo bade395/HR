@@ -76,6 +76,9 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
+        .official-logo-hover { transition: transform 180ms ease, filter 180ms ease; }
+        .official-logo-hover:hover { transform: scale(1.06) translateY(-2px); filter: drop-shadow(0 6px 10px rgba(30, 58, 138, 0.22)); }
+        @media (prefers-reduced-motion: reduce) { .official-logo-hover { transition: none; } .official-logo-hover:hover { transform: none; filter: none; } }
         body {
             font-family: 'Cairo', 'Tajawal', sans-serif;
             background-color: #f8fafc;
@@ -323,6 +326,8 @@
             }
         }
     </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
     <div id="root"></div>
@@ -339,9 +344,9 @@
             address: "العنوان :- الرياض — جدة",
             email: "info@nisr.sa",
             phones: "0510484749 - 0536928208",
-            logoUrl: "/assets/logo.png",
+            logoUrl: localStorage.getItem('hr_official_logo') || "/assets/logo.png",
             letterheadBg: "/assets/letterhead-bg.jpg",
-            stampUrl: "/assets/stamp.png",
+            stampUrl: "",
             hrManager: "أحمد بن عبد الله السعيد",
             gmName: "سلطان بن فهد المقرن"
         };
@@ -822,7 +827,7 @@
                             <img 
                                 src={ALNESR_INFO.logoUrl} 
                                 alt="شعار النسر الثاقب" 
-                                className="h-14 w-auto object-contain drop-shadow-xs"
+                                className="official-logo-hover h-14 w-auto object-contain drop-shadow-xs"
                             />
                         </div>
                     </div>
@@ -876,21 +881,27 @@
                 localStorage.setItem('hr_theme', theme);
             }, [theme]);
             const normalizeEmployee = (employee) => ({ ...employee, appointment_date: employee.appointment_date || employee.hire_date || '', commencement_date: employee.commencement_date || '', work_permit_expiry_date: employee.work_permit_expiry_date || '', medical_insurance_expiry_date: employee.medical_insurance_expiry_date || employee.medical_insurance_expiry || '' });
+            const companyScope = localStorage.getItem('hr_current_company_id') || 'unassigned';
+            const scopedKey = (base) => `${base}_${companyScope}`;
+            const resetVersion = 'hr_empty_workspace_v1';
             const [employees, setEmployees] = useState(() => {
-                const local = localStorage.getItem('hr_employees_data');
-                const source = local ? JSON.parse(local) : INITIAL_EMPLOYEES;
-                return source.map(normalizeEmployee);
+                if (localStorage.getItem(`hr_data_reset_version_${companyScope}`) !== resetVersion) {
+                    ['hr_employees_data', 'hr_disciplinary_data', 'hr_settlements_data', 'hr_employee_documents'].forEach(key => localStorage.removeItem(scopedKey(key)));
+                    localStorage.setItem(`hr_data_reset_version_${companyScope}`, resetVersion);
+                }
+                const local = localStorage.getItem(scopedKey('hr_employees_data'));
+                return local ? JSON.parse(local).map(normalizeEmployee) : [];
             });
             const [disciplinaryList, setDisciplinaryList] = useState(() => {
-                const local = localStorage.getItem('hr_disciplinary_data');
-                return local ? JSON.parse(local) : INITIAL_DISCIPLINARY;
+                const local = localStorage.getItem(scopedKey('hr_disciplinary_data'));
+                return local ? JSON.parse(local) : [];
             });
             const [settlementsList, setSettlementsList] = useState(() => {
-                const local = localStorage.getItem('hr_settlements_data');
-                return local ? JSON.parse(local) : INITIAL_SETTLEMENTS;
+                const local = localStorage.getItem(scopedKey('hr_settlements_data'));
+                return local ? JSON.parse(local) : [];
             });
             const [employeeDocuments, setEmployeeDocuments] = useState(() => {
-                const local = localStorage.getItem('hr_employee_documents');
+                const local = localStorage.getItem(scopedKey('hr_employee_documents'));
                 return local ? JSON.parse(local) : [];
             });
 
@@ -927,10 +938,10 @@
             const [viewMode, setViewMode] = useState('table');
 
             // Sync with storage
-            useEffect(() => { localStorage.setItem('hr_employees_data', JSON.stringify(employees)); }, [employees]);
-            useEffect(() => { localStorage.setItem('hr_disciplinary_data', JSON.stringify(disciplinaryList)); }, [disciplinaryList]);
-            useEffect(() => { localStorage.setItem('hr_settlements_data', JSON.stringify(settlementsList)); }, [settlementsList]);
-            useEffect(() => { localStorage.setItem('hr_employee_documents', JSON.stringify(employeeDocuments)); }, [employeeDocuments]);
+            useEffect(() => { localStorage.setItem(scopedKey('hr_employees_data'), JSON.stringify(employees)); }, [employees]);
+            useEffect(() => { localStorage.setItem(scopedKey('hr_disciplinary_data'), JSON.stringify(disciplinaryList)); }, [disciplinaryList]);
+            useEffect(() => { localStorage.setItem(scopedKey('hr_settlements_data'), JSON.stringify(settlementsList)); }, [settlementsList]);
+            useEffect(() => { localStorage.setItem(scopedKey('hr_employee_documents'), JSON.stringify(employeeDocuments)); }, [employeeDocuments]);
 
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
@@ -1193,7 +1204,7 @@
                                         <img 
                                             src={ALNESR_INFO.logoUrl} 
                                             alt={ALNESR_INFO.name} 
-                                            className="h-11 w-auto object-contain max-w-[120px]" 
+                                            className="official-logo-hover h-11 w-auto object-contain max-w-[120px]" 
                                         />
                                     </div>
                                     <div>
@@ -1471,7 +1482,7 @@
                     <footer className="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800 text-center no-print">
                         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                                <img src={ALNESR_INFO.logoUrl} className="h-6 w-auto" alt="Logo" />
+                                <img src={ALNESR_INFO.logoUrl} className="official-logo-hover h-6 w-auto" alt="Logo" />
                                 <span className="font-bold text-slate-300">{ALNESR_INFO.name}</span>
                                 <span>&bull; نظام الموارد البشرية المتكامل</span>
                             </div>
@@ -1946,9 +1957,7 @@
                                             <td className="value-cell text-center p-3 relative">
                                                 <div className="font-bold text-xs">{fullName}</div>
                                                 <div className="text-[10px] text-slate-500 mt-1">توقيع الموظف: .....................</div>
-                                                <div className="absolute left-2 top-0 w-20 h-20 pointer-events-none opacity-90">
-                                                    <img src={ALNESR_INFO.stampUrl} alt="الختم" className="w-full h-full object-contain transform rotate-[-6deg]" />
-                                                </div>
+                                                
                                             </td>
                                         </tr>
                                     </tbody>
@@ -2130,10 +2139,8 @@
                                             <td className="label-cell w-36">اعتماد المدير العام</td>
                                             <td className="value-cell text-center p-3 relative">
                                                 <div className="font-bold text-xs">{ALNESR_INFO.gmName}</div>
-                                                <div className="text-[10px] text-slate-500 mt-1">الختم والاعتماد الرسمي</div>
-                                                <div className="absolute left-2 top-0 w-20 h-20 pointer-events-none opacity-90">
-                                                    <img src={ALNESR_INFO.stampUrl} alt="الختم" className="w-full h-full object-contain transform rotate-[-6deg]" />
-                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-1">اعتماد الموارد البشرية</div>
+                                                
                                             </td>
                                         </tr>
                                     </tbody>
@@ -2322,9 +2329,7 @@
                                             <td className="value-cell text-center p-3 relative">
                                                 <div className="font-bold text-xs">{ALNESR_INFO.gmName}</div>
                                                 <div className="text-[10px] text-slate-500 mt-1">المدير العام التنفيذي</div>
-                                                <div className="absolute left-2 top-0 w-20 h-20 pointer-events-none opacity-90">
-                                                    <img src={ALNESR_INFO.stampUrl} alt="الختم" className="w-full h-full object-contain transform rotate-[-6deg]" />
-                                                </div>
+                                                
                                             </td>
                                         </tr>
                                     </tbody>
@@ -2594,10 +2599,8 @@
                                             <td className="label-cell w-36">اعتماد الموارد البشرية</td>
                                             <td className="value-cell text-center p-3 relative">
                                                 <div className="font-bold text-xs">{investigator}</div>
-                                                <div className="text-[10px] text-slate-500 mt-1">الختم والاعتماد الرسمي</div>
-                                                <div className="absolute left-2 top-0 w-20 h-20 pointer-events-none opacity-90">
-                                                    <img src={ALNESR_INFO.stampUrl} alt="الختم" className="w-full h-full object-contain transform rotate-[-6deg]" />
-                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-1">اعتماد الموارد البشرية</div>
+                                                
                                             </td>
                                         </tr>
                                     </tbody>
@@ -3448,10 +3451,8 @@
                                             <td className="label-cell w-36">اعتماد الموارد البشرية</td>
                                             <td className="value-cell text-center p-3 relative">
                                                 <div className="font-bold text-xs">{ALNESR_INFO.hrManager}</div>
-                                                <div className="text-[10px] text-slate-500 mt-1">الختم والاعتماد الرسمي</div>
-                                                <div className="absolute left-2 top-0 w-20 h-20 pointer-events-none opacity-90">
-                                                    <img src={ALNESR_INFO.stampUrl} alt="الختم" className="w-full h-full object-contain transform rotate-[-6deg]" />
-                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-1">اعتماد الموارد البشرية</div>
+                                                
                                             </td>
                                         </tr>
                                     </tbody>
@@ -3549,10 +3550,8 @@
                                                 <td className="label-cell w-36">اعتماد المدير العام</td>
                                                 <td className="value-cell text-center p-3 relative">
                                                     <div className="font-bold text-xs">{ALNESR_INFO.gmName}</div>
-                                                    <div className="text-[10px] text-slate-500 mt-1">الختم والاعتماد الرسمي</div>
-                                                    <div className="absolute left-2 top-0 w-20 h-20 pointer-events-none opacity-90">
-                                                        <img src={ALNESR_INFO.stampUrl} alt="الختم" className="w-full h-full object-contain transform rotate-[-6deg]" />
-                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 mt-1">اعتماد الموارد البشرية</div>
+                                                    
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -3627,10 +3626,8 @@
                                                 <td className="label-cell w-36">اعتماد المدير العام</td>
                                                 <td className="value-cell text-center p-3 relative">
                                                     <div className="font-bold text-xs">{ALNESR_INFO.gmName}</div>
-                                                    <div className="text-[10px] text-slate-500 mt-1">الختم والاعتماد الرسمي</div>
-                                                    <div className="absolute left-2 top-0 w-20 h-20 pointer-events-none opacity-90">
-                                                        <img src={ALNESR_INFO.stampUrl} alt="الختم" className="w-full h-full object-contain transform rotate-[-6deg]" />
-                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 mt-1">اعتماد الموارد البشرية</div>
+                                                    
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -3694,10 +3691,8 @@
                                                 <td className="label-cell w-36">اعتماد المدير العام</td>
                                                 <td className="value-cell text-center p-3 relative">
                                                     <div className="font-bold text-xs">{ALNESR_INFO.gmName}</div>
-                                                    <div className="text-[10px] text-slate-500 mt-1">الختم والاعتماد الرسمي</div>
-                                                    <div className="absolute left-2 top-0 w-20 h-20 pointer-events-none opacity-90">
-                                                        <img src={ALNESR_INFO.stampUrl} alt="الختم" className="w-full h-full object-contain transform rotate-[-6deg]" />
-                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 mt-1">اعتماد الموارد البشرية</div>
+                                                    
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -4389,10 +4384,229 @@
             const field = (label, value, setValue, type = 'number') => <div><label className="block font-bold mb-1">{label}</label><input type={type} min={type === 'number' ? 0 : undefined} value={value} onChange={e => setValue(type === 'number' ? Number(e.target.value) : e.target.value)} className="w-full border rounded-xl p-2.5 text-xs" /></div>;
             return <div className="space-y-6"><div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200"><h2 className="text-lg font-bold text-slate-900">حاسبة انتهاء العلاقة التعاقدية وتسليم المستحقات</h2><p className="text-slate-500 text-xs mt-1">احسب أجر الأيام، بدل رصيد الإجازات، مكافأة نهاية الخدمة، الخصومات والسلف ثم احفظ التسوية.</p></div><div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border space-y-4 text-xs"><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label className="block font-bold mb-1">الموظف</label><select value={selectedEmpId} onChange={e => setSelectedEmpId(e.target.value)} className="w-full border rounded-xl p-2.5"><option value="">اختر الموظف</option>{employees.map(e => <option key={e.id} value={e.id}>{e.emp_code} - {e.full_name}</option>)}</select><div className="text-[10px] text-slate-500 mt-1">الهوية: {employee.national_id || 'غير محدد'} — الراتب الإجمالي: {salary.toLocaleString('ar-SA')} ر.س — المباشرة: {employee.commencement_date || employee.hire_date || 'غير محدد'}</div></div>{field('تاريخ انتهاء العلاقة', termDate, setTermDate, 'text')}</div><div className="grid grid-cols-2 sm:grid-cols-4 gap-4">{field('سنوات الخدمة', serviceYears, setServiceYears)}{field('الشهور', serviceMonths, setServiceMonths)}{field('أيام راتب مستحقة', unpaidDays, setUnpaidDays)}{field('أيام إجازة مستحقة', leaveDays, setLeaveDays)}</div><div className="grid grid-cols-1 sm:grid-cols-3 gap-4">{field('خصومات', deductions, setDeductions)}{field('سلف وعهد مالية', advances, setAdvances)}{field('مستحقات أخرى', otherDue, setOtherDue)}</div><div><label className="block font-bold mb-1">سبب انتهاء العلاقة</label><input value={reason} onChange={e => setReason(e.target.value)} className="w-full border rounded-xl p-2.5 text-xs" /></div><button onClick={save} disabled={!employee.id} className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-xl font-bold text-xs">حفظ التسوية وتسليم المستحقات</button></div><div className="bg-gradient-to-br from-amber-900 to-slate-900 text-white rounded-2xl p-6 shadow-xl"><span className="text-xs text-amber-300 font-semibold">ملخص التسوية</span><div className="space-y-3 mt-4 text-xs"><div className="flex justify-between"><span>أجر الأيام</span><strong>{Math.round(result.salaryDue).toLocaleString('ar-SA')} ر.س</strong></div><div className="flex justify-between"><span>بدل الإجازات</span><strong>{Math.round(result.leaveCash).toLocaleString('ar-SA')} ر.س</strong></div><div className="flex justify-between"><span>مكافأة نهاية الخدمة</span><strong>{Math.round(result.eosb).toLocaleString('ar-SA')} ر.س</strong></div><div className="flex justify-between border-t border-white/20 pt-3 text-base"><span>صافي المستحق</span><strong className="text-amber-300">{Math.round(result.net).toLocaleString('ar-SA')} ر.س</strong></div></div><p className="text-[10px] text-slate-300 mt-6">مدة الخدمة المحسوبة: {result.years.toFixed(2)} سنة. راجع اللائحة الداخلية والعقد قبل اعتماد الصرف.</p></div></div></div>;
         }
+        // =====================================================================
+        // LOCAL AUTH + COMPANY ONBOARDING GATE
+        // =====================================================================
+        function LocalAuthGate({ children }) {
+            const [mode, setMode] = useState('loading');
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [displayName, setDisplayName] = useState('');
+            const [error, setError] = useState('');
+            const [user, setUser] = useState(null);
+            const [settingsOpen, setSettingsOpen] = useState(false);
+            const [officialLogo, setOfficialLogo] = useState(() => localStorage.getItem('hr_official_logo') || ALNESR_INFO.logoUrl);
+            const [logoSaved, setLogoSaved] = useState(false);
+
+            const api = async (url, options = {}) => {
+                const response = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }, ...options });
+                const body = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(body.error || 'تعذر تنفيذ العملية');
+                return body;
+            };
+            useEffect(() => {
+    let mounted = true;
+
+    const loadSession = async () => {
+        try {
+            const {
+                data: { session },
+                error: sessionError
+            } = await supabaseClient.auth.getSession();
+
+            if (sessionError) {
+                throw sessionError;
+            }
+
+            if (!session?.user) {
+                if (mounted) {
+                    setUser(null);
+                    setMode('login');
+                }
+                return;
+            }
+
+            const { data: profile, error: profileError } =
+                await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+            if (profileError) {
+                throw profileError;
+            }
+
+            if (mounted) {
+                setUser({
+                    id: session.user.id,
+                    username: session.user.email,
+                    email: session.user.email,
+                    displayName:
+                        profile?.display_name ||
+                        session.user.user_metadata?.display_name ||
+                        session.user.email,
+                    role: profile?.role || 'admin'
+                });
+
+                setMode('ready');
+            }
+
+        } catch (error) {
+            console.error('Supabase session error:', error);
+
+            if (mounted) {
+                setUser(null);
+                setMode('login');
+                setError(error?.message || 'تعذر التحقق من جلسة الدخول');
+            }
+        }
+    };
+
+    loadSession();
+
+    // متابعة تسجيل الدخول والخروج تلقائيًا
+    const {
+        data: { subscription }
+    } = supabaseClient.auth.onAuthStateChange(
+        async (event, session) => {
+
+            if (!mounted) return;
+
+            if (event === 'SIGNED_OUT' || !session?.user) {
+                setUser(null);
+                setMode('login');
+                return;
+            }
+
+            if (
+                event === 'SIGNED_IN' ||
+                event === 'TOKEN_REFRESHED' ||
+                event === 'INITIAL_SESSION'
+            ) {
+                try {
+                    const { data: profile, error } =
+                        await supabaseClient
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', session.user.id)
+                            .single();
+
+                    if (error) throw error;
+
+                    setUser({
+                        id: session.user.id,
+                        username: session.user.email,
+                        email: session.user.email,
+                        displayName:
+                            profile?.display_name ||
+                            session.user.user_metadata?.display_name ||
+                            session.user.email,
+                        role: profile?.role || 'admin'
+                    });
+
+                    setMode('ready');
+
+                } catch (error) {
+                    console.error('Profile loading error:', error);
+                    setUser(null);
+                    setMode('login');
+                    setError(error?.message || 'تعذر تحميل بيانات المستخدم');
+                }
+            }
+        }
+    );
+
+    return () => {
+        mounted = false;
+        subscription.unsubscribe();
+    };
+}, []);
+            const submitAuth = async (event) => {
+    event.preventDefault();
+    setError('');
+
+    try {
+        if (!username || !password) {
+            setError('يرجى إدخال البريد الإلكتروني وكلمة المرور');
+            return;
+        }
+
+        const { data, error } =
+            await supabaseClient.auth.signInWithPassword({
+                email: username.trim(),
+                password: password
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data.user) {
+            throw new Error('تعذر تسجيل الدخول');
+        }
+
+        // جلب بيانات المستخدم من profiles
+        const { data: profile, error: profileError } =
+            await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+
+        if (profileError) {
+            throw profileError;
+        }
+
+        setUser({
+            id: data.user.id,
+            username: data.user.email,
+            email: data.user.email,
+            displayName:
+                profile?.display_name ||
+                data.user.user_metadata?.display_name ||
+                data.user.email,
+            role: profile?.role || 'admin'
+        });
+
+        setMode('ready');
+
+    } catch (e) {
+        console.error('Supabase login error:', e);
+
+        setError(
+            e?.message ||
+            'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+        );
+    }
+};
+            const readFile = (file, setter) => {
+                if (!file) return;
+                const reader = new FileReader(); reader.onload = () => setter(String(reader.result || '')); reader.readAsDataURL(file);
+            };
+            const saveOfficialLogo = () => {
+                const value = officialLogo || '/assets/logo.png';
+                localStorage.setItem('hr_official_logo', value);
+                ALNESR_INFO.logoUrl = value;
+                setLogoSaved(true);
+                setTimeout(() => setLogoSaved(false), 1800);
+            };
+            const resetOfficialLogo = () => {
+                localStorage.removeItem('hr_official_logo');
+                ALNESR_INFO.logoUrl = '/assets/logo.png';
+                setOfficialLogo('/assets/logo.png');
+                setLogoSaved(true);
+                setTimeout(() => setLogoSaved(false), 1800);
+            };
+            if (mode === 'loading') return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><div className="text-center"><div className="text-3xl font-black text-emerald-400">HR.NISR.SA</div><div className="mt-2 text-sm text-slate-300">جارٍ تجهيز جلسة الدخول الآمنة...</div></div></div>;
+            if (mode === 'login' || mode === 'setup') return <div dir="rtl" className="min-h-screen flex items-center justify-center bg-slate-950 px-4"><div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8"><div className="text-center mb-8"><div className="mx-auto w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden"><img src={ALNESR_INFO.logoUrl} className="max-w-full max-h-full object-contain" /></div><h1 className="text-2xl font-black text-slate-900 mt-4">HR.NISR.SA</h1><p className="text-slate-500 text-sm mt-1">نظام إدارة الموارد البشرية متعدد الشركات</p></div><h2 className="text-lg font-black text-slate-900 mb-4">{mode === 'setup' ? 'إنشاء حساب الإدارة الأول' : 'تسجيل الدخول'}</h2><form onSubmit={submitAuth} className="space-y-4"><div><label className="block text-xs font-bold text-slate-700 mb-1">اسم المستخدم</label><input required value={username} onChange={e => setUsername(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm" autoComplete="username" /></div>{mode === 'setup' && <div><label className="block text-xs font-bold text-slate-700 mb-1">الاسم الظاهر</label><input required value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm" /></div>}<div><label className="block text-xs font-bold text-slate-700 mb-1">كلمة المرور</label><input required minLength="8" type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm" autoComplete={mode === 'setup' ? 'new-password' : 'current-password'} /></div>{error && <div className="rounded-xl bg-rose-50 text-rose-700 text-xs font-bold p-3">{error}</div>}<button className="w-full rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold py-3">{mode === 'setup' ? 'إنشاء الحساب والدخول' : 'دخول آمن'}</button></form></div></div>;
+            return <><div dir="rtl" className="fixed top-3 left-3 z-[60] flex items-center gap-2"><button onClick={() => setSettingsOpen(true)} className="rounded-xl bg-slate-900 text-white px-3 py-2 text-xs font-bold shadow-lg">الإعدادات</button><button onClick={async () => { await api('/api/local-auth/logout', { method: 'POST' }); window.location.reload(); }} className="rounded-xl bg-rose-700 text-white px-3 py-2 text-xs font-bold shadow-lg">خروج</button></div>{children}{settingsOpen && <div dir="rtl" className="fixed inset-0 z-[70] bg-slate-950/70 flex items-center justify-center p-4"><div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6"><div className="flex items-center justify-between mb-5"><div><h2 className="text-xl font-black text-slate-900">الإعدادات</h2><p className="text-xs text-slate-500 mt-1">تخصيص الهوية الرسمية للنظام.</p></div><button onClick={() => setSettingsOpen(false)} className="text-slate-500 text-xl">×</button></div><div className="rounded-2xl border border-slate-200 p-4"><h3 className="font-black text-slate-900">الشعار الرسمي</h3><p className="text-xs text-slate-500 mt-1 mb-3">غيّر الشعار يدويًا عند الحاجة وسيُستخدم في الواجهة والنماذج وملفات PDF.</p><div className="flex items-center gap-4 mb-4"><div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden"><img src={officialLogo} className="official-logo-hover max-w-full max-h-full object-contain" /></div><label className="flex-1 rounded-xl border border-dashed border-slate-300 p-3 text-xs font-bold cursor-pointer">اختيار شعار جديد<input type="file" accept="image/*" onChange={e => readFile(e.target.files?.[0], setOfficialLogo)} className="block w-full mt-2 text-xs" /></label></div><div className="flex items-center gap-2"><button onClick={saveOfficialLogo} className="rounded-xl bg-blue-900 text-white font-bold px-4 py-2.5 text-sm">حفظ الشعار</button><button onClick={resetOfficialLogo} className="rounded-xl bg-slate-100 text-slate-700 font-bold px-4 py-2.5 text-sm">استعادة الافتراضي</button>{logoSaved && <span className="text-emerald-700 text-xs font-bold">تم الحفظ</span>}</div></div></div></div>}</>;
+        }
+
         // ROOT RENDER
         // =========================================================================
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<LocalAuthGate><App /></LocalAuthGate>);
     </script>
 </body>
 </html>

@@ -1,13 +1,21 @@
 {
   "build_command": "pnpm run build",
-  "capabilities": [],
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
   "dev_command": "pnpm run dev",
-  "env_vars": {},
+  "env_vars": {
+    "DATABASE_URL": "mysql://3Pi2cyjJ37v9jDw.root:p27uV2xe4M95LvDEiPis@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/JRfpvYi4YJk6iEGBmHgNG7?ssl={\"rejectUnauthorized\":true}",
+    "DRIZZLE_DATABASE_URL": "mysql://3Pi2cyjJ37v9jDw.root:p27uV2xe4M95LvDEiPis@gateway03.us-east-1.prod.aws.tidbcloud.com:4000/JRfpvYi4YJk6iEGBmHgNG7?ssl={\"rejectUnauthorized\":true}",
+    "MANUS_WEBDEV_PROJECT_ID": "JRfpvYi4YJk6iEGBmHgNG7"
+  },
   "experiments": null,
   "git_remote": {
     "repo_url": "https://7f0548f6b28a1758d9bf7be630d36cb4.artifacts.cloudflare.net/git/prod/JRfpvYi4YJk6iEGBmHgNG7.git",
-    "expiration": "2026-08-20T21:55:59.740Z",
-    "token": "art_v2_x_15b791057b76e3e4ca1ef48e565def237d110a8c?expires=1787262959",
+    "expiration": "2026-08-21T22:20:45.957Z",
+    "token": "art_v2_x_d99eafadffe6f5f105c2f672891a323bc10d75b4?expires=1787350845",
     "backend": "GIT_BACKEND_ARTIFACTS"
   },
   "name": "hr-nisr-v2",
@@ -23,7 +31,7 @@
     "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
     "VITE_ANALYTICS_WEBSITE_ID": "f53a4615-756f-4c59-99ee-333324687c03",
     "VITE_APP_ID": "JRfpvYi4YJk6iEGBmHgNG7",
-    "VITE_APP_LOGO": "",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663764253465/NDInLivXQyLwOdZr.png",
     "VITE_APP_TITLE": "HR.NISR.SA",
     "VITE_FRONTEND_FORGE_API_KEY": "UmHwMicR8t8rkjDBkVQhsg",
     "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
