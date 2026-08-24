@@ -18,12 +18,24 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      utils.auth.me.setData(undefined, null);
-    },
+    onSuccess: () => utils.auth.me.setData(undefined, null),
   });
 
   const logout = useCallback(async () => {
+    // The application uses an HttpOnly server cookie for authentication, so
+    // clearing localStorage alone cannot log the user out. Clear the cookie
+    // through a dedicated endpoint first, independently of tRPC state.
+    try {
+      await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+    } catch (error) {
+      console.error("Server logout failed:", error);
+    }
+
+    // Keep the legacy tRPC logout call as a compatibility fallback.
     try {
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
@@ -31,25 +43,23 @@ export function useAuth(options?: UseAuthOptions) {
         !(error instanceof TRPCClientError) ||
         error.data?.code !== "UNAUTHORIZED"
       ) {
-        console.error("Logout failed:", error);
+        console.error("tRPC logout failed:", error);
       }
-    } finally {
-      // Clear client-side auth/cache state. Do not delete employee or business data.
-      try {
-        sessionStorage.removeItem("manus-cookie");
-      } catch {}
-      try {
-        localStorage.removeItem("manus-runtime-user-info");
-      } catch {}
+    }
 
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
+    try {
+      sessionStorage.removeItem("manus-cookie");
+    } catch {}
+    try {
+      localStorage.removeItem("manus-runtime-user-info");
+    } catch {}
 
-      // Force the application to re-evaluate authentication instead of leaving
-      // the user on a stale authenticated screen after logout.
-      if (typeof window !== "undefined") {
-        window.location.replace("/");
-      }
+    utils.auth.me.setData(undefined, null);
+    utils.auth.me.remove();
+    utils.clear();
+
+    if (typeof window !== "undefined") {
+      window.location.replace("/");
     }
   }, [logoutMutation, utils]);
 
@@ -73,11 +83,8 @@ export function useAuth(options?: UseAuthOptions) {
     if (typeof window === "undefined") return;
     if (redirectPath && window.location.pathname === redirectPath) return;
 
-    if (redirectPath) {
-      window.location.href = redirectPath;
-    } else {
-      startLogin();
-    }
+    if (redirectPath) window.location.href = redirectPath;
+    else startLogin();
   }, [
     redirectOnUnauthenticated,
     redirectPath,
