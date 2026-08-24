@@ -3,6 +3,33 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_X_c771EZAdhB1t-F7FROlw_7ndeYWp0
 
 window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+// The current single-company build uses a legacy /api/local-auth/logout button,
+// while authentication is actually handled by Supabase Auth. Intercept that
+// legacy request and perform a real Supabase Auth signOut before the page reloads.
+(function installSupabaseLogoutBridge(){
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async function(input, init = {}) {
+        const url = typeof input === 'string' ? input : (input?.url || '');
+        if (url.includes('/api/local-auth/logout')) {
+            try {
+                const { error } = await window.supabaseClient.auth.signOut({ scope: 'local' });
+                if (error) throw error;
+            } catch (error) {
+                console.error('Supabase logout failed:', error);
+                return new Response(JSON.stringify({ error: error?.message || 'تعذر تسجيل الخروج من Supabase Auth' }), {
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+            return new Response(JSON.stringify({ success: true }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+        return originalFetch(input, init);
+    };
+})();
+
 (function installCloudStorageBridge() {
     const originalGetItem = Storage.prototype.getItem;
     const originalSetItem = Storage.prototype.setItem;
@@ -31,7 +58,7 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBL
     function readDisciplinary(){const d=readTable('disciplinary_actions');if(!d)return null;disciplinaryIds=new Set(d.map(r=>r.id));return d;}
     function readSettlements(){const d=readTable('settlements');if(!d)return null;settlementIds=new Set(d.map(r=>r.id));return d;}
     Storage.prototype.getItem=function(key){const n=String(key);if(this===localStorage){if(employeeKey.test(n)){const d=readEmployees();return d?JSON.stringify(d):null;}if(disciplinaryKey.test(n)){const d=readDisciplinary();return d?JSON.stringify(d):null;}if(settlementKey.test(n)){const d=readSettlements();return d?JSON.stringify(d):null;}if(documentKey.test(n)||legacyHrKey.test(n))return null;}return originalGetItem.call(this,key);};
-    Storage.prototype.setItem=function(key,value){const n=String(key);if(this===localStorage){try{const parsed=JSON.parse(value||'[]');if(employeeKey.test(n)&&Array.isArray(parsed)){const c=getCompanyId();if(c){const existing=readEmployees()||[];const current=new Set(parsed.map(x=>String(x.emp_code||'')).filter(Boolean));parsed.forEach(item=>{if(!item?.emp_code)return;const p=payload(item,c,employeeColumns);const old=existing.find(r=>String(r.emp_code)===String(item.emp_code));if(old?.id)requestSync('PATCH',`${SUPABASE_URL}/rest/v1/employees?id=eq.${encodeURIComponent(old.id)}`,p);else requestSync('POST',`${SUPABASE_URL}/rest/v1/employees`,p);});existing.forEach(old=>{if(old.emp_code&&!current.has(String(old.emp_code)))requestSync('DELETE',`${SUPABASE_URL}/rest/v1/employees?emp_code=eq.${encodeURIComponent(old.emp_code)}`);});}return;}if(disciplinaryKey.test(n)&&Array.isArray(parsed)){syncCollection(parsed,'disciplinary_actions','disciplinary');return;}if(settlementKey.test(n)&&Array.isArray(parsed)){syncCollection(parsed,'settlements','settlement');return;}}catch(error){console.warn('Cloud persistence parse error:',error);}if(documentKey.test(n)||legacyHrKey.test(n))return;}originalSetItem.call(this,key,value);};
+    Storage.prototype.setItem=function(key,value){const n=String(key);if(this===localStorage){try{const parsed=JSON.parse(value||'[]');if(employeeKey.test(n)&&Array.isArray(parsed)){const c=getCompanyId();if(c){const existing=readEmployees()||[];const current=new Set(parsed.map(x=>String(x.emp_code||'')).filter(Boolean));parsed.forEach(item=>{if(!item?.emp_code)return;const p=payload(item,c,employeeColumns);const old=existing.find(r=>String(r.emp_code)===String(item.emp_code));if(old?.id)requestSync('PATCH',`${SUPABASE_URL}/rest/v1/employees?id=eq.${encodeURIComponent(old.id)}`,p);else requestSync('POST',`${SUPABASE_URL}/rest/v1/employees`,p);});existing.forEach(old=>{if(old.emp_code&&!current.has(String(old.emp_code)))requestSync('DELETE',`${SUPABASE_URL}/rest/v1/employees?emp_code=eq.${encodeURIComponent(old.emp_code)}`);});}return;}if(disciplinaryKey.test(n)&&Array.isArray(parsed)){syncCollection(parsed,'disciplinary_actions','disciplinary');return;}if(settlementKey.test(n)&&Array.isArray(parsed){syncCollection(parsed,'settlements','settlement');return;}}catch(error){console.warn('Cloud persistence parse error:',error);}if(documentKey.test(n)||legacyHrKey.test(n))return;}originalSetItem.call(this,key,value);};
     Storage.prototype.removeItem=function(key){const n=String(key);if(this===localStorage&&(employeeKey.test(n)||disciplinaryKey.test(n)||settlementKey.test(n)||documentKey.test(n)||legacyHrKey.test(n)))return;originalRemoveItem.call(this,key);};
     window.supabaseHRCloud={readEmployees,readDisciplinary,readSettlements,syncDisciplinary:items=>syncCollection(items,'disciplinary_actions','disciplinary'),syncSettlements:items=>syncCollection(items,'settlements','settlement'),getCompanyId};
 })();
